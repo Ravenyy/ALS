@@ -18,14 +18,19 @@ public class Main {
 		int iters = 100;
 		String[] category = { "Book", "Music", "DVD", "Video" };
 		
-		/*
-		 * Matrix ratings = Pivot.pivot(Parser.parseData(++productsAmount,
-		 * category[0]));
-		 * 
-		 * Matrix P = new Matrix(d, ratings.getColumns()); P.fillWithRandomStuff();
-		 * Matrix U = new Matrix(d, ratings.getRows()); U.fillWithRandomStuff();
-		 */
-
+		
+		Matrix R = Pivot.pivot(Parser.parseData(++productsAmount, category[0]));
+		  
+		Matrix P = new Matrix(d, R.getColumns()); P.fillWithRandomStuff();
+		Matrix U = new Matrix(d, R.getRows()); U.fillWithRandomStuff();
+		ALS.full(productsAmount, iters, lambda, d, R, U, P);
+		Matrix R2 = U.transpose().times(P);
+		System.out.println("Macierz przewidzianych ocen:");
+		R2.print();
+		System.out.println("Mean squared error: " + calculateMSE(R, R2));
+	}
+		 
+/*
 		double[][] tutR = { { 0, 0, 0, 0, 4, 0, 5, 4, 0, 0 }, { 4, 0, 4, 0, 0, 4, 0, 0, 0, 4 },
 				{ 5, 4, 5, 5, 0, 5, 5, 5, 5, 5 }, { 0, 5, 5, 0, 5, 0, 0, 5, 0, 5 }, { 0, 5, 5, 0, 5, 0, 0, 5, 0, 5 } };
 		Matrix R = new Matrix(tutR);
@@ -50,7 +55,7 @@ public class Main {
 		System.out.println("Macierz przewidzianych ocen:");
 		R2.print();
 		System.out.println("Mean squared error: " + calculateMSE(R, R2));
-	}
+	}*/
 
 	public static double calculateMSE(Matrix R, Matrix R2) {
 		double error = 0;

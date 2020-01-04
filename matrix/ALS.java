@@ -64,7 +64,7 @@ public class ALS {
 				colP = P.getColumn(j);
 				c += Math.pow(colP.vectorNorm(), 2);
 				if(ratings.getCell(i, j) != 0) 
-					a += (ratings.getCell(i, j) - Matrix.multiplyVectors(colU, colP));
+					a += Math.pow((ratings.getCell(i, j) - Matrix.multiplyVectors(colU, colP)), 2);
 			}
 		}
 		result = a + lambda * (b + c);

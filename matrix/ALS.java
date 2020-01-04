@@ -41,8 +41,8 @@ public class ALS {
 		double result = 0;
 		Matrix test = new Matrix(ratings.getRows(), ratings.getColumns());
 		for(int i = 0; i < iters; i++) {
-			updateU(d, lambda, U, cloneP, ratings);
-			updateP(d, lambda, cloneU, P, ratings);
+			updateU(d, lambda, U, P, ratings);
+			updateP(d, lambda, U, P, ratings);
 			//System.out.print("U w iteracji " + i + "\n"); U.print();
 			//System.out.print("P w iteracji " + i + "\n"); P.print();
 			prev_result = result;

@@ -10,7 +10,6 @@ import matrix.Data;
 import matrix.Matrix;
 import matrix.Parser;
 import matrix.Pivot;
-import matrix.Rate;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
@@ -19,18 +18,6 @@ public class Main {
 		double lambda = 0.1;
 		int iters = 120;
 		String[] category = { "Book", "Music", "DVD", "Video" };
-		
-		/*HashMap<Integer, Rate> hm = Parser.parseData(productsAmount, category[0]);
-		
-		System.out.println("MapSize: "+ hm.size());
-		
-		for(int i = 0; i < hm.size(); i++) {
-			Rate r = hm.get(i);
-			System.out.println("id produktu: " + r.getProductId()
-						+ ", id uzytkownika: " + r.getUserId() + ", ocena: " + r.getRate());
-		}
-		*/
-			
 		
 		Matrix R = Pivot.pivot(Parser.parseData(++productsAmount, category[0]));
 		Matrix P = new Matrix(d, R.getColumns()); P.fillWithRandomStuff();

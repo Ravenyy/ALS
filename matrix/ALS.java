@@ -8,7 +8,26 @@ import java.util.List;
 
 public class ALS {
 	
-	public static Matrix recommendationsTest(int products, int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) {
+	public static Matrix prepTestMatrix(Matrix T) {
+		
+		int[] pos = new int[2];
+		int counter = 0;
+		for(int i = 0; i < T.getRows(); i++) {
+			counter = 0;
+			for(int j = 0; j < T.getColumns(); j++) {
+				if(T.getCell(i, j) != 0.0) {
+					pos[0] = i; pos[1] = j;
+					counter++;
+				}
+			}
+			if(counter >= 2) {
+				T.setCell(0.0, pos[0], pos[1]);
+			}
+		}
+		return T;
+	}
+	
+	public static Matrix recommendationsTest(int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) {
 		Matrix test = new Matrix(ratings.getRows(), ratings.getColumns());
 		double functionResult = 0;
 		double multStuff = 0;
@@ -23,55 +42,44 @@ public class ALS {
 		return test;
 	}
 	
-	public static void full(int products, int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) throws IOException {
-		Matrix cloneU = new Matrix(d, U.getColumns());
-		
-		for(int i = 0; i < d; i++)
-			for(int j = 0; j < U.getColumns(); j++)
-				cloneU.setCell(U.getCell(i, j), i, j);
-		
-		Matrix cloneP = new Matrix(d, P.getColumns());
-		
-		for(int i = 0; i < d; i++)
-			for(int j = 0; j < P.getColumns(); j++)
-				cloneP.setCell(P.getCell(i, j), i, j);
-		
-		
+	public static Matrix full(int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) throws IOException {
 		double prev_result = 0;
 		double result = 0;
 		Matrix test = new Matrix(ratings.getRows(), ratings.getColumns());
 		for(int i = 0; i < iters; i++) {
 			updateU(d, lambda, U, P, ratings);
 			updateP(d, lambda, U, P, ratings);
-			//System.out.print("U w iteracji " + i + "\n"); U.print();
-			//System.out.print("P w iteracji " + i + "\n"); P.print();
 			prev_result = result;
 			result = calculateTarget(U, P, lambda, ratings);
-			//System.out.println("RESULT: " + result);
-
+			System.out.println("RESULT: " + result);
 		}
+		return test;
 	}
 	
-	public static double calculateTarget(Matrix U, Matrix P, double lambda, Matrix ratings) {
-		double result, a, b, c;
-		a = b = c = 0;
-		Matrix colU;
-		Matrix colP;
-		for(int i = 0; i < U.getColumns(); i++) {
-			colU = U.getColumn(i);
-			b += Math.pow(colU.vectorNorm(), 2);
-			for(int j = 0; j < P.getColumns(); j++) {
-				colP = P.getColumn(j);
-				c += Math.pow(colP.vectorNorm(), 2);
-				if(ratings.getCell(i, j) != 0) 
-					a += Math.pow((ratings.getCell(i, j) - Matrix.multiplyVectors(colU, colP)), 2);
-			}
-		}
-		result = a + lambda * (b + c);
-		//System.out.println("a = " + a + "\tb = " + b + "\tc = " + c);
-		//System.out.println("Result = " + result);
-		return result;
-	}
+    public static double calculateTarget(Matrix U, Matrix P, double lambda, Matrix ratings) {
+        double result, a, b, c;
+        a = b = c = 0;
+        Matrix colU;
+        Matrix colP;
+        for(int i = 0; i < U.getColumns(); i++) {
+            colU = U.getColumn(i);
+            b += Math.pow(colU.vectorNorm(), 2);
+            for(int j = 0; j < P.getColumns(); j++) {
+                colP = P.getColumn(j);
+                if(ratings.getCell(i, j) != 0) 
+                    a += Math.pow((ratings.getCell(i, j) - Matrix.multiplyVectors(colU, colP)), 2);
+            }
+        }
+        for(int j = 0; j < P.getColumns(); j++) {
+            colP = P.getColumn(j);
+            c += Math.pow(colP.vectorNorm(), 2);
+        }
+
+        result = a + lambda * (b + c);
+        //System.out.println("a = " + a + "\tb = " + b + "\tc = " + c);
+        //System.out.println("Result = " + result);
+        return result;
+    }
 		
 	//krok 4 algorytmu z Zad3.pdf i tutoriala
 	public static void updateU(int d, double reg, Matrix U, Matrix P, Matrix ratings) {
@@ -79,7 +87,7 @@ public class ALS {
 	int p = P.getColumns();
 	
 	for(int user = 0; user < u; user++) {
-		//I_u - lista indeksow uzytkownikow, ktorzy ocenili dany przedmiot
+		//I_u - lista indeksow u¿ytkownikow, którzy ocenili dany przedmiot
 		int findItemIndex = 0;
 		List<Integer> I_u = new ArrayList<Integer>();
 		for(int i = 0; i < p; i++) {
@@ -96,7 +104,7 @@ public class ALS {
 				if(I_u.contains(j))
 					P_I_uTempList.add(P.getCell(i, j));
 		
-		//ten maly potwor przerabia liste na dwuwymiarowa tablice i na Matrix
+		//Ten ma³y potwór przerabia listê na Matrix
 		int row = -1;
 		for(int i = 0; i < P_I_uTempList.size(); i++) {
 			if(i % P_I_u.getColumns() == 0)
@@ -104,12 +112,12 @@ public class ALS {
 			P_I_u.setCell(P_I_uTempList.get(i), row, i % P_I_u.getColumns());
 		}
 		
-		//macierz A_u, cokolwiek ona przedstawia
+		//Macierz A_u
 		Matrix P_I_u_T = P_I_u.transpose();
 		Matrix E = Matrix.identityMatrix(d);
 		Matrix A_u = P_I_u.times(P_I_u_T).plus(E.multiplyCells(reg));
 		
-		//macierz V_u, tak jak w tutorialu, czyli kolumny z macierzy P o indeksach z I_u pomnozone przez ocenê
+		//Macierz V_u, czyli kolumny z macierzy P o indeksach z I_u pomno¿one przez ocenê
 		List<Matrix> tempRatings = new ArrayList<Matrix>();
 		Matrix col = new Matrix(d, 1);
 		for(int i = 0; i < I_u.size(); i++)
@@ -122,7 +130,7 @@ public class ALS {
 		for(Matrix mat : tempRatings)
 			V_u = V_u.plus(mat);
 		
-		//wynik kroku 4. z algorytmu z Zad3.pdf i tutoriala
+		//Wynik kroku 4. z algorytmu z Zad3.pdf i tutoriala
 		Matrix result = A_u.gaussPG(V_u);
 		
 		
@@ -133,19 +141,19 @@ public class ALS {
 		System.out.print("result col\n"); result.print();*/
 		
 		
-		//podstawiamy kolumnê z wynikiem na odpowiednia pozycje w kopii macierzy U
+		//Podstawiamy kolumnê z wynikiem na odpowiedni¹ pozycje w macierzy U
 		U.switchColumn(result, user);
 		}
 	}
 	
-	//krok 5 algorytmu, to samo co getNewU tylko z innymi danymi
+	//Krok 5 algorytmu, to samo co getNewU tylko z innymi danymi
 	public static void updateP(int d, double reg, Matrix U, Matrix P, Matrix ratings) {
 		
 		int u = U.getColumns();
 		int p = P.getColumns();
 		
 		for(int product = 0; product < p; product++) {
-			//I_p - lista indeksow uzytkownikow, ktorzy ocenili dany produkt
+			//I_p - lista indeksów u¿ytkownikow, którzy ocenili dany produkt
 			int findUserIndex = 0;
 			List<Integer> I_p = new ArrayList<Integer>();
 			for(int i = 0; i < u; i++) {
@@ -169,12 +177,12 @@ public class ALS {
 			U_I_p.setCell(U_I_pTempList.get(i), row, i % U_I_p.getColumns());
 				}
 
-		//A_p, skladowa rownania, nie wiem wtf
+		//A_p
 		Matrix U_I_p_T = U_I_p.transpose();
 		Matrix E = Matrix.identityMatrix(d);
 		Matrix A_p = U_I_p.times(U_I_p_T).plus(E.multiplyCells(reg));
 
-		//macierz V_p, tak jak w tutorialu, czyli kolumny z macierzy U o indeksach z I_p pomnozone przez ocenê
+		//Macierz V_p, czyli kolumny z macierzy U o indeksach z I_p pomno¿one przez ocenê
 		List<Matrix> tempRatings = new ArrayList<Matrix>();
 		Matrix col = new Matrix(d, 1);
 		for(int i = 0; i < I_p.size(); i++)
@@ -188,7 +196,7 @@ public class ALS {
 		for(Matrix mat : tempRatings)
 			V_p = V_p.plus(mat);
 
-		//wynik kroku 6. z algorytmu z Zad3.pdf i tutoriala
+		//Wynik kroku 6.
 		Matrix result = A_p.gaussPG(V_p);
 		
 		
@@ -199,12 +207,12 @@ public class ALS {
 		System.out.print("result col\n"); result.print();*/
 		
 
-		//podstawiamy kolumnê z wynikiem na odpowiednia pozycje w kopii macierzy P
+		//Podstawiamy kolumnê z wynikiem na odpowiednia pozycjê macierzy P
 		P.switchColumn(result, product);
 		}
 	}
 	
-	//zaokraglanie wyniku do testow, ze https://stackoverflow.com/questions/2808535/round-a-double-to-2-decimal-places
+	//Zaokr¹glanie wyniku do testów, z https://stackoverflow.com/questions/2808535/round-a-double-to-2-decimal-places
 	public static double round(double value, int places) {
 	    if (places < 0) throw new IllegalArgumentException();
 
@@ -212,4 +220,5 @@ public class ALS {
 	    bd = bd.setScale(places, RoundingMode.HALF_UP);
 	    return bd.doubleValue();
 	}
+
 }

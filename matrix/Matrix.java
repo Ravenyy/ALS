@@ -167,7 +167,7 @@ public class Matrix {
 	
 	public static double multiplyVectors(Matrix A, Matrix B) {
 		double result = 0;
-		for(int i = 0; i < A.getColumns(); i++)
+		for(int i = 0; i < A.getRows(); i++)
 			result += A.getCell(i, 0) * B.getCell(i, 0);
 		return result;
 	}

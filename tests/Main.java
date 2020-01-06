@@ -2,6 +2,7 @@ package tests;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import matrix.ALS;
@@ -9,24 +10,41 @@ import matrix.Data;
 import matrix.Matrix;
 import matrix.Parser;
 import matrix.Pivot;
+import matrix.Rate;
 
 public class Main {
 	public static void main(String[] args) throws IOException {
 		int productsAmount = 10;
 		int d = 3;
 		double lambda = 0.1;
-		int iters = 100;
+		int iters = 120;
 		String[] category = { "Book", "Music", "DVD", "Video" };
 		
+		/*HashMap<Integer, Rate> hm = Parser.parseData(productsAmount, category[0]);
+		
+		System.out.println("MapSize: "+ hm.size());
+		
+		for(int i = 0; i < hm.size(); i++) {
+			Rate r = hm.get(i);
+			System.out.println("id produktu: " + r.getProductId()
+						+ ", id uzytkownika: " + r.getUserId() + ", ocena: " + r.getRate());
+		}
+		*/
+			
 		
 		Matrix R = Pivot.pivot(Parser.parseData(++productsAmount, category[0]));
-		  
 		Matrix P = new Matrix(d, R.getColumns()); P.fillWithRandomStuff();
 		Matrix U = new Matrix(d, R.getRows()); U.fillWithRandomStuff();
-		ALS.full(productsAmount, iters, lambda, d, R, U, P);
+		System.out.println("Kolumny: " + R.getColumns() + ", Wiersze: "+ R.getRows());
+		Matrix T = ALS.prepTestMatrix(R);
+		System.out.print("Iloœæ u¿ytkowników: " + U.getColumns() + "\nIloœæ produktów: " + P.getColumns() + "\n");
+		ALS.full(iters, lambda, d, R, U, P);
 		Matrix R2 = U.transpose().times(P);
-		System.out.println("Macierz przewidzianych ocen:");
+		T.print();
+		//System.out.println("Macierz przewidzianych ocen:");
 		R2.print();
+		//Matrix T = ALS.recommendationsTest(iters, lambda, d, R, U, P);
+		//T.print();
 		System.out.println("Mean squared error: " + calculateMSE(R, R2));
 	}
 		 

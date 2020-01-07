@@ -21,7 +21,6 @@ public class Parser {
 		int startSubstring = 0;
 		int endSubstring = 0;
 		String username = new String();
-		String productAsin = new String();
 		int rating = 0;
 		
 		String buff = new String();
@@ -36,7 +35,8 @@ public class Parser {
 			}
 			if(flag == 1) {
 				if(line.indexOf("total: 0") >= 0) {
-					list.add(new Data(productCounter, null, 0, category));
+					recordLimit++;
+					continue;
 				}
 				buff = "cutomer:";
 				if(line.indexOf(buff) >= 0) {
@@ -44,7 +44,6 @@ public class Parser {
 					endSubstring = line.indexOf(buff) + buff.length() + 15;
 					username = line.substring(startSubstring, endSubstring).replaceAll("\\s+", "");
 					rating = Integer.parseInt(line.substring((endSubstring + 10), (endSubstring + 12)).replaceAll("\\s+", ""));
-					//userDict.put(userCounter, username);
 					list.add(new Data(productCounter, username, rating, category));
 				}	
 			}

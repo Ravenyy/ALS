@@ -1,6 +1,9 @@
 package matrix;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -8,25 +11,31 @@ import java.util.List;
 
 public class ALS {
 	
-	public static Matrix prepTestMatrix(Matrix T) {
-		
-		int[] pos = new int[2];
-		int counter = 0;
-		for(int i = 0; i < T.getRows(); i++) {
-			counter = 0;
-			for(int j = 0; j < T.getColumns(); j++) {
-				if(T.getCell(i, j) != 0.0) {
-					pos[0] = i; pos[1] = j;
-					counter++;
-				}
-			}
-			if(counter >= 2) {
-				T.setCell(0.0, pos[0], pos[1]);
-			}
-		}
-		return T;
-	}
-	
+    public static Matrix prepTestMatrix(Matrix R) {
+    	
+    	Matrix T = new Matrix(R.getRows(), R.getColumns());
+    	for(int i = 0; i < R.getRows(); i++)
+    		for(int j = 0; j < R.getColumns(); j++)
+    			T.setCell(R.getCell(i, j), i, j);
+    	
+    	
+        int[] pos = new int[2];
+        int counter = 0;
+        for(int i = 0; i < R.getRows(); i++) {
+            counter = 0;
+            for(int j = 0; j < R.getColumns(); j++) {
+                if(R.getCell(i, j) != 0.0) {
+                    pos[0] = i; pos[1] = j;
+                    counter++;
+                }
+            }
+            if(counter >= 2) {
+                T.setCell(0.0, pos[0], pos[1]);
+            }
+        }
+        return T;
+    }
+
 	public static Matrix recommendationsTest(int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) {
 		Matrix test = new Matrix(ratings.getRows(), ratings.getColumns());
 		double functionResult = 0;
@@ -42,7 +51,7 @@ public class ALS {
 		return test;
 	}
 	
-	public static Matrix full(int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) throws IOException {
+	public static void full(int iters, double lambda, int d, Matrix ratings, Matrix U, Matrix P) throws IOException {
 		double prev_result = 0;
 		double result = 0;
 		Matrix test = new Matrix(ratings.getRows(), ratings.getColumns());
@@ -51,9 +60,25 @@ public class ALS {
 			updateP(d, lambda, U, P, ratings);
 			prev_result = result;
 			result = calculateTarget(U, P, lambda, ratings);
+			toFile(("result" + iters + "_"+ lambda + "_" + d + ".txt"), (i + "; " + result));
 			System.out.println("RESULT: " + result);
 		}
-		return test;
+	}
+	
+	public static double calculateError(Matrix R, Matrix R2, int iters, double lambda, int d) {
+		double error = 0;
+		int count = 0;
+		for (int i = 0; i < R2.getRows(); i++) {
+			for (int j = 0; j < R2.getColumns(); j++) {
+				double value = R.getCell(i, j);
+				double predictedValue = R2.getCell(i, j);
+				if (value != 0) {
+					count++;
+					error += Math.abs(value - predictedValue);
+				}
+			}
+		}
+		return error / count;
 	}
 	
     public static double calculateTarget(Matrix U, Matrix P, double lambda, Matrix ratings) {
@@ -220,5 +245,15 @@ public class ALS {
 	    bd = bd.setScale(places, RoundingMode.HALF_UP);
 	    return bd.doubleValue();
 	}
-
+	
+	private static void toFile(String fileName, String content) {
+		try(FileWriter fw = new FileWriter(fileName, true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			PrintWriter out = new PrintWriter(bw))
+		{
+			out.println(content);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
